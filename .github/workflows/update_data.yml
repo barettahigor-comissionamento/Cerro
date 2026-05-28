@@ -1,0 +1,37 @@
+name: Atualizar dados da planilha
+
+on:
+  schedule:
+    # Roda a cada 30 minutos
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    # Permite rodar manualmente pelo GitHub
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Buscar dados do Apps Script
+        run: |
+          echo "Buscando dados da planilha..."
+          curl -L --max-time 60 --retry 3 \
+            "https://script.google.com/macros/s/AKfycbzad3G8GokqsaVlci6jp-h69iqn-6C7D-LIcBXMWxFOZXktUCT2urJlTPL1ZTaXhmZXqA/exec" \
+            -o data.json
+          echo "Dados recebidos:"
+          wc -c data.json
+          # Verifica se é JSON válido
+          python3 -c "import json,sys; d=json.load(open('data.json')); print('OK - aptos:', d.get('lupa_totals',{}).get('total_aptos','?'))"
+
+      - name: Commit e push do data.json
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "🔄 Dados atualizados $(date '+%d/%m/%Y %H:%M')"
+          git push
