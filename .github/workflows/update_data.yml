@@ -14,21 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Buscar dados do Apps Script
+      - name: Buscar e salvar dados
         run: |
-          curl -L --max-time 60 --retry 3 \
-            "https://script.google.com/macros/s/AKfycbxulZmSyj-JaRxaS1QV8m62wa3ouMRzGRCYW03ynYn6T_iXLr1elj0ikkbPKwct5QZ0/exec" \
-            -o data.json
-          python3 -c "
-import json
-d = json.load(open('data.json'))
-lt = d.get('lupa_totals', {})
-cron = [x for x in d.get('cronograma',[]) if not x.get('is_group')]
-print('OK! Aptos:', lt.get('total_aptos'), '| Cron:', len(cron), '| Gerado:', d.get('generated_at','?'))
-"
-
-      - name: Salvar data.json
-        run: |
+          URL="https://script.google.com/macros/s/AKfycbxulZmSyj-JaRxaS1QV8m62wa3ouMRzGRCYW03ynYn6T_iXLr1elj0ikkbPKwct5QZ0/exec"
+          curl -L --max-time 60 --retry 3 "$URL" -o data.json
+          echo "Bytes: $(wc -c < data.json)"
+          head -c 100 data.json
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add data.json
